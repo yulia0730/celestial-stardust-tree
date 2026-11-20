@@ -10,7 +10,7 @@
 <meta http-equiv="Pragma" content="no-cache" />
 <meta http-equiv="Expires" content="0" />
 <title>星尘 · 螺旋圣诞树 | Celestial Stardust Tree</title>
-<!-- Yulume GitHub Pages gift mirror: forced gift mode, fragment-private payload -->
+<!-- Yulume GitHub Pages gift mirror v6.7: forced gift mode + audio unlock -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,600&family=Great+Vibes&family=Noto+Serif+SC:wght@300;400;600&display=swap" rel="stylesheet">
@@ -2993,6 +2993,31 @@ function syncUIFromState() {
   if (letterVisibleSwitch) letterVisibleSwitch.classList.toggle('on', state.letter.visible);
   const chimeSwitch = document.getElementById('chimeSwitch');
   const fireworkSwitch = document.getElementById('fireworkSwitch');
+const giftAudioBtn = document.getElementById('giftAudioBtn');
+const giftAudioLabel = giftAudioBtn?.querySelector('span');
+let giftAudioPrimed = false;
+
+if (isGiftMode && giftAudioLabel) giftAudioLabel.textContent = '开启声音';
+
+giftAudioBtn?.addEventListener('click', () => {
+  if (!isGiftMode) return;
+
+  // iPhone/Safari 禁止无手势自动播放：把“声音”按钮本身作为明确的音频解锁手势。
+  if (!giftAudioPrimed) {
+    giftAudioPrimed = true;
+    if (giftAudioLabel) giftAudioLabel.textContent = '声音';
+    bgmSwitch.classList.add('on');
+    SoundEngine.toggleBgm(true).then(() => {
+      syncUIFromState();
+    });
+    return;
+  }
+
+  // 后续点击只确保 AudioContext 仍在运行，不重复从头播放。
+  SoundEngine.ensureCtx().then(activeCtx => {
+    if (activeCtx && activeCtx.state === 'running') SoundEngine.updateVolumes();
+  });
+});
   if (chimeSwitch) chimeSwitch.classList.toggle('on', state.audio.chimeOn);
   if (fireworkSwitch) fireworkSwitch.classList.toggle('on', state.audio.fireworkOn);
   const chimeVol = document.getElementById('chimeVol');
